@@ -2,7 +2,7 @@
 using System.Text;
 using UnityEngine;
 
-public class Tile : MonoBehaviour, IEquatable<Tile> {
+public class Tile : MonoBehaviour, IEquatable<Tile>, IComparable {
 
     public int X {
         get { return xCoor; }
@@ -17,7 +17,7 @@ public class Tile : MonoBehaviour, IEquatable<Tile> {
     public bool IsPossibleTurn {
         get { return _isPossibleTurn; }
         set {
-            _isPossibleTurn = value ? ShowPossibleTurn() : HidePossibleTurn();
+			_isPossibleTurn = value ? OnTrue() : OnFalse();
         }
     }
     private bool _isPossibleTurn;
@@ -26,22 +26,22 @@ public class Tile : MonoBehaviour, IEquatable<Tile> {
     [SerializeField] private ParticleSystem _particleSystem;
 
     private void Awake() {
-        xCoor = (int)Math.Floor(transform.position.x);
-        yCoor = (int)Math.Floor(transform.position.y);
-        Messenger.AddListener("NextTurn", Hide);
-        Messenger.AddListener("WallPicked", Hide);
+        xCoor = (int)transform.position.x;
+        yCoor = (int)transform.position.y;
+        Messenger.AddListener("NextTurn", HidePossibleTurn);
+        Messenger.AddListener("WallPicked", HidePossibleTurn);
     }
 
-    private void Hide() {
-        IsPossibleTurn = false;
+    private void HidePossibleTurn() {
+		if (IsPossibleTurn != false) IsPossibleTurn = false;
     }
 
-    private bool ShowPossibleTurn() {
+    private bool OnTrue() {
         _particleSystem.Play();
         return true;
     }
 
-    private bool HidePossibleTurn() {
+    private bool OnFalse() {
         _particleSystem.Stop();
         return false;
     }
@@ -93,4 +93,17 @@ public class Tile : MonoBehaviour, IEquatable<Tile> {
         sb.Append(xCoor).Append(",").Append(yCoor).Append("]");
         return sb.ToString();
     }
+
+	public int CompareTo(object other) {
+		if (other == null)
+			return 1;
+		Tile otherTile = other as Tile;
+		if (otherTile != null) {
+			if (this.X != otherTile.X)
+				return this.X - otherTile.X;
+			else
+				return this.Y - otherTile.Y;
+		} else
+			throw new ArgumentException ("Object isn't Tile");
+	}
 }
